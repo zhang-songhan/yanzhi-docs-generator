@@ -1,0 +1,5 @@
+{
+  "name": "yanzhi-docs-generator",
+  "description": "A Claude Code plugin that generates or updates the detailed architecture documentation for your project.",
+  "version": "v260527"
+}

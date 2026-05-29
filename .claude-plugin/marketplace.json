@@ -1,0 +1,17 @@
+{
+  "name": "yanzhi-docs-generator",
+  "owner": {
+    "name": "ATreep"
+  },
+  "plugins": [
+    {
+      "name": "yanzhi-docs-generator",
+      "source": "./",
+      "description": "A Claude Code plugin that generates or updates the detailed architecture documentation for your project.",
+      "version": "v260527",
+      "author": {
+        "name": "ATreep"
+      }
+    }
+  ]
+}
