@@ -10,7 +10,7 @@
 - **全中文输出**：所有文件名、目录名和文档内容均使用简体中文。
 - **Mermaid 图表**：逻辑流程使用图表表达（flowchart、sequence、ER、state、class），绝不包含原始源代码。
 - **前端 UI 截图占位符**：前端/UI 模块文档自动插入截图占位符（`【图X：...】`），附带图片引用链接指向同级 `截图/` 目录。
-- **Web App 自动截图**：检测到 Web App 项目时，使用 Chrome DevTools MCP 自动启动项目并截取页面截图，保存到对应的 `截图/` 目录。
+- **Web App 自动截图**：检测到 Web App 项目时，自动调用 `auto-capture-for-webapp:take-screenshots` Skill 启动项目并截取页面截图，保存到对应的 `截图/` 目录。
 - **修改历史追踪**：每份文档记录修改时间、版本号、变更内容和操作人。
 
 ## 安装
@@ -29,10 +29,10 @@
 
 ### 3. 安装截图自动捕获依赖（可选）
 
-如需自动截取 Web App 截图，需安装 Chrome DevTools MCP 插件：
+如需自动截取 Web App 截图，需安装 auto-capture-for-webapp 插件：
 
 ```
-/plugin install chrome-devtools-mcp@chrome-devtools-mcp
+/plugin install auto-capture-for-webapp@auto-capture-for-webapp
 ```
 
 ## 使用
@@ -87,7 +87,7 @@ docs/
 
 ### 文档生成完成后
 
-若包含前端 UI 模块，会在终端输出**截图占位符位置清单**，标明每个含占位符的文档路径、占位符数量及截图状态（已自动截图 / 需手动截图）。
+若包含前端 UI 模块且满足 `auto-capture-for-webapp:take-screenshots` Skill 的截图条件，会自动为每个截图占位符捕获真实截图。若无法自动截图，占位符会保留在文档中供手动补充。
 
 ### 支持的编程语言
 
@@ -99,7 +99,7 @@ docs/
 - **中文编号命名** — `docs/` 下所有文件和目录使用 `{序号}_{中文名称}` 格式。
 - **保留手动编辑** — 增量更新仅修改与源代码变更对应的部分。
 - **修改历史** — 每份文档以修改历史表开头，记录每次变更。
-- **前端截图占位符** — 前端/UI 模块文档插入截图占位符，Web App 项目自动截取并保存截图。
+- **前端截图占位符** — 前端/UI 模块文档插入截图占位符，Web App 项目通过 `auto-capture-for-webapp:take-screenshots` Skill 自动截取并保存截图。
 - **截图目录** — 截图保存在对应文档同级 `截图/` 目录中。
 
 ## 许可证
