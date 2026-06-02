@@ -23,6 +23,7 @@ digraph document_flow {
     "Auto-capture screenshots" [shape=box];
     "Check staleness" [shape=diamond];
     "Ask user: refactor entire docs?" [shape=box];
+    "Output screenshot modification table" [shape=box];
     "Report screenshot placeholder list" [shape=box];
     "Done" [shape=doublecircle];
 
@@ -38,7 +39,8 @@ digraph document_flow {
     "Insert screenshot placeholders in UI docs" -> "Web App project?";
     "Web App project?" -> "Auto-capture screenshots" [label="yes"];
     "Web App project?" -> "Check staleness" [label="no"];
-    "Auto-capture screenshots" -> "Check staleness";
+    "Auto-capture screenshots" -> "Output screenshot modification table";
+    "Output screenshot modification table" -> "Check staleness";
     "Report: no changes" -> "Check staleness";
     "Check staleness" -> "Ask user: refactor entire docs?" [label="most docs stale"];
     "Check staleness" -> "Report screenshot placeholder list" [label="fresh enough"];
@@ -187,31 +189,78 @@ Use this exact format — each placeholder MUST be followed by a markdown image 
 ![图X](截图/X-descriptive-name.png)
 ```
 
-The image filename uses the pattern `X-descriptive-name.png` where:
+The image filename uses the pattern `X-descriptive-name.png` or `Xa-descriptive-name.png` where:
 - `X` is the sequential figure number (starting from 1, numbering within each `.md` file)
+- `a`, `b`, `c` (optional letter suffix) indicates scroll position variant of the same page: `a` = top/initial viewport, `b` = middle or lower section, `c` = bottom. Omit the suffix for pages captured in a single viewport.
 - `descriptive-name` is a short English slug describing the screenshot
 
 Examples:
 - `【图1：登录页面 - 默认状态，展示系统Logo、用户名输入框、密码输入框、登录按钮、忘记密码链接的整体布局】` followed by `![图1](截图/1-login-page.png)`
-- `【图2：仪表盘主页 - 数据加载完成状态，展示顶部导航栏、左侧菜单、统计卡片区域、最近数据表格】` followed by `![图2](截图/2-dashboard-main.png)`
+- `【图2a：仪表盘主页 - 页面上半部分（初始视口），展示顶部导航栏、左侧菜单、统计卡片区域】` followed by `![图2a](截图/2a-dashboard-top.png)`
+- `【图2b：仪表盘主页 - 页面下半部分（滚动后），展示最近数据表格、活动日志列表、页脚信息】` followed by `![图2b](截图/2b-dashboard-bottom.png)`
 - `【图3：用户设置页面 - 编辑状态，展示头像上传区域、昵称输入框、邮箱修改表单、保存按钮】` followed by `![图3](截图/3-settings-edit.png)`
 
 ### Screenshot Count Guidelines
 
-| UI Scope | Screenshot Count |
+Base counts (before scroll variants):
+
+| UI Scope | Base Screenshot Count |
 |----------|-----------------|
 | Small (1-3 pages/views) | 3-6 screenshots |
 | Medium (4-10 pages/views) | 6-15 screenshots |
 | Large (11+ pages/views) | 15-25 screenshots |
 
+**Scroll multiplier**: For each page whose content extends beyond 1.5× viewport height, add 1-2 extra screenshots to cover scroll positions (see Scroll Position Coverage above). The total count per module doc should reflect: `base_count + scroll_variants`.
+
+Example: A medium project with 6 pages, 3 of which are long/scrollable → 10-18 base + 3-6 scroll variants = 13-24 total screenshots.
+
 Priority for screenshots in architecture docs:
 1. Main page / entry view (logged-in and logged-out states)
-2. Core feature pages (main interaction views)
-3. Key interaction states (form validation, loading, empty, error states)
-4. Complex dialogs or modals
-5. Data visualization or result views
-6. Navigation structure (menu, breadcrumb, tab switching)
-7. Settings/configuration pages
+2. Core feature pages (main interaction views, **covering full page content across multiple scroll positions if needed**)
+3. Scroll-depth coverage for long pages — capture top, middle, and bottom sections to document full page layout
+4. Key interaction states (form validation, loading, empty, error states)
+5. Complex dialogs or modals
+6. Data visualization or result views
+7. Navigation structure (menu, breadcrumb, tab switching)
+8. Settings/configuration pages
+
+### Scroll Position Coverage
+
+Architecture documentation must capture the **complete layout** of each page. A single viewport screenshot cannot capture long/scrollable pages. For any page whose content extends beyond one viewport height, capture multiple screenshots at different scroll positions.
+
+**When to capture multiple scroll positions:**
+- Page content height > 1.5× viewport height → Capture at least 2 screenshots (top + bottom)
+- Page content height > 3× viewport height → Capture at least 3 screenshots (top + middle + bottom)
+- Page has distinct layout sections separated by scroll (e.g., hero section → feature grid → footer) → Capture one per major section
+- Dashboard or data pages with multiple widget/grid rows → Capture each logical row group
+
+**Scroll position naming convention:**
+Use letter suffixes (`a`, `b`, `c`) after the figure number for scroll variants of the same page:
+
+```
+Xa-descriptive-name.png  → 页面上半部分（初始视口）
+Xb-descriptive-name.png  → 页面下半部分（滚动后）或中部
+Xc-descriptive-name.png  → 页面底部（进一步滚动后）
+```
+
+Example for a long dashboard page:
+```
+【图2a：仪表盘主页 - 页面上半部分（初始视口），展示顶部导航栏、左侧菜单、统计卡片区域】
+![图2a](截图/2a-dashboard-top.png)
+
+【图2b：仪表盘主页 - 页面下半部分（滚动后），展示最近数据表格、活动日志列表、页脚信息】
+![图2b](截图/2b-dashboard-bottom.png)
+```
+
+**Single-page screenshots (no scroll variants):**
+For short pages whose entire content fits within one viewport (e.g., login page, simple form), use a single numbered placeholder without letter suffix:
+```
+【图1：登录页面 - 默认状态，展示Logo、输入框、按钮布局】
+![图1](截图/1-login-page.png)
+```
+
+**fullPage capture alternative:**
+For pages where scroll segmentation is impractical (e.g., very long continuous content), use `fullPage: true` in Chrome DevTools MCP to capture the entire page in one screenshot. This is acceptable for architecture docs but less preferred than segmented captures, as fullPage screenshots may be too tall to read comfortably.
 
 ### Screenshot Table in Doc File
 
@@ -224,6 +273,8 @@ At the end of each `.md` file that contains screenshot placeholders, append a sc
 |------|---------|---------|--------|
 | 图1  | 登录流程 | 登录页面默认状态，展示Logo、输入框、按钮布局 | 截图/1-login-page.png |
 | 图2  | 登录流程 | 登录失败状态，展示错误提示信息 | 截图/2-login-error.png |
+| 图3a | 仪表盘主页 | 页面上半部分（初始视口），展示顶部导航栏、统计卡片区域 | 截图/3a-dashboard-top.png |
+| 图3b | 仪表盘主页 | 页面下半部分（滚动后），展示数据表格、活动日志 | 截图/3b-dashboard-bottom.png |
 ```
 
 ## Core Rules
@@ -271,6 +322,7 @@ Run when `docs/` does not exist or is empty.
 4. **Insert Screenshot Placeholders**
    - For every frontend/UI module doc file, insert screenshot placeholders at key UI interaction points (see Screenshot Placeholder Format).
    - Place placeholders after the natural language description of each page/view/component, before the next section.
+   - **For long/scrollable pages**: Insert multiple placeholders covering different scroll positions (see Scroll Position Coverage above). Use `Xa`, `Xb`, `Xc` letter suffixes for scroll variants of the same page.
    - Create the `截图/` subdirectory in each module folder that has frontend UI content.
    - Append the screenshot inventory table at the end of each doc file that contains placeholders.
 
@@ -367,14 +419,31 @@ Run when `docs/` exists with detailed documentation.
    - If a changed module has no corresponding docs folder yet, flag it as **new** — create the folder and `01_模块概述.md`.
    - If a docs folder exists but the source module was deleted, flag it for removal or archival.
 
-3. **Read and Analyze Affected Docs**
+3. **Classify Changes and Map to Screenshot Actions**
+
+   For each changed source file, classify the change type and determine the corresponding screenshot action:
+
+   | Change Type | Doc Action | Screenshot Impact |
+   |------------|---------------|-------------------|
+   | New UI page/component added | Add new sub-module doc | **新增** — Insert new screenshot placeholders |
+   | Existing UI page modified (layout/visual changed) | Update doc sections + screenshots | **替换** — Update placeholder description, mark old screenshot for replacement |
+   | Existing UI page modified (logic only, same visual) | Update doc text only | **保留** — Keep existing screenshot, no visual change |
+   | UI page/component removed | Remove doc sections | **删除** — Remove placeholders and screenshot files |
+   | New backend module (no UI) | Add new module docs | No screenshot needed |
+   | Backend logic changed (no UI impact) | Update module docs | No screenshot needed |
+   | UI redesign (structural) | Rewrite affected docs | **替换** — Replace ALL affected screenshots |
+   | Config/deployment change | Update architecture/runtime docs | No screenshot needed |
+
+   **CRITICAL: After classifying changes, build a Screenshot Modification Table** (see Step 6.1 below) that lists every screenshot that needs to be added, replaced, deleted, or kept. This table drives both the doc update and the auto-capture workflow.
+
+4. **Read and Analyze Affected Docs**
 
    For each doc file that needs updating:
    - Read the current doc content.
    - Read the corresponding source code (current state).
    - Identify what has changed and which sections of the doc are now stale.
 
-4. **Update Docs (delta only)**
+5. **Update Docs (delta only)**
 
    Apply targeted updates:
    - **Modified modules** — update relevant sections in the module's doc files under `06_模块详细设计/`.
@@ -386,27 +455,60 @@ Run when `docs/` exists with detailed documentation.
    - **Index** — update `docs/README.md` if new doc files/folders were added or removed.
    - **Modification history** — append a new row to the history table in every affected document. Use git username from `git config user.name`.
 
-5. **Update Screenshot Placeholders (for frontend/UI changes)**
+6. **Update Screenshot Placeholders (for frontend/UI changes)**
 
-   When the changed source files include frontend/UI code:
-   - **New UI pages/views** → Insert new screenshot placeholders following the Screenshot Placeholder Format. Add them to the `截图/` directory at the module folder level.
-   - **Modified UI** → Update existing placeholder descriptions to reflect the new UI state. If the visual change is significant, mark the old screenshot as needing replacement.
-   - **Removed UI pages/views** → Remove their placeholders and corresponding entries from the screenshot inventory table.
-   - **Renumbering**: If placeholders were added or deleted within a doc file, renumber ALL placeholders in that file from 图1 upward in ascending order. Update the screenshot inventory table accordingly.
+   When the changed source files include frontend/UI code, update screenshots based on the Screenshot Modification Table from Step 3:
+
+   - **New UI pages/views** (新增) → Insert new screenshot placeholders following the Screenshot Placeholder Format. For long/scrollable pages, include scroll position variants (图Xa, 图Xb, ...) following the Scroll Position Coverage guidelines. Add them to the `截图/` directory at the module folder level.
+   - **Modified UI** (替换) → Update existing placeholder descriptions to reflect the new UI state. If the page layout changed significantly (e.g., content added/removed that affects scroll height), reassess scroll position coverage — add or remove scroll variants as needed. Mark the old screenshot file for replacement.
+   - **Removed UI pages/views** (删除) → Remove their placeholders (including all scroll variants), corresponding entries from the screenshot inventory table, and delete the screenshot files from the `截图/` directory.
+   - **Renumbering**: If ANY placeholder was added or deleted within a doc file, renumber ALL placeholders in that file from 图1 upward in ascending order. Update the screenshot inventory table accordingly. Do NOT keep gaps or skip numbers. If only descriptions were updated (same count, no additions/removals), keep the original numbering.
    - If a module that now has UI content didn't previously have a `截图/` directory, create it.
 
-6. **Auto-Capture Updated Screenshots (Web App projects)**
+   ### 6.1 Screenshot Modification Table (Delta Updates)
 
-   After updating docs, if the project is a Web App and frontend/UI code was changed, auto-capture new or updated screenshots. See "Auto-Capture Screenshots with Chrome DevTools MCP" section.
+   **MANDATORY for delta updates that involve frontend/UI changes.** After updating doc files, compile and output the Screenshot Modification Table — a complete inventory of every screenshot action across all affected doc files.
 
-7. **Final Summary**
+   Output this table **directly in the terminal** after updating docs. Do NOT include it in the output markdown files.
+
+   ```
+   ## 截图修改清单
+
+   | 序号 | 操作 | 所在文档 | 修改说明 |
+   |------|------|---------|---------|
+   | 图1  | 新增 | 03_用户界面/02_仪表盘.md | 新增仪表盘统计页截图，展示数据卡片布局 |
+   | 图3  | 替换 | 01_认证模块/02_登录流程.md | 登录页UI改版，需替换为新版截图 |
+   | 图5  | 删除 | 03_用户界面/04_旧页面.md | 旧设置页面已移除，截图不再需要 |
+   | 图2  | 保留 | 01_认证模块/03_令牌管理.md | 令牌管理页无视觉变化，保留原截图 |
+   ```
+
+   Action types: **新增** (add), **替换** (replace), **删除** (remove), **保留** (keep)
+
+   After outputting the table, proceed to auto-capture (Step 7) for screenshots marked 新增 or 替换 (if conditions are met).
+
+7. **Auto-Capture Updated Screenshots (Web App projects)**
+
+   After updating docs and building the Screenshot Modification Table, if the project is a Web App and frontend/UI code was changed, auto-capture screenshots following the auto-capture workflow (see "Auto-Capture Screenshots with Chrome DevTools MCP" section below).
+
+   **Delta auto-capture strategy:**
+   - **新增 (Add)** screenshots → Auto-capture via Chrome DevTools MCP (navigate to new pages and capture)
+   - **替换 (Replace)** screenshots → Auto-capture IF the page/route is still accessible; otherwise mark for manual capture
+   - **删除 (Remove)** screenshots → Delete the screenshot file from `截图/` directory
+   - **保留 (Keep)** screenshots → No action needed, file stays in place
+
+   Update the Screenshot Modification Table with capture results after each screenshot attempt.
+
+8. **Final Summary**
 
    Report:
    - Source files detected as changed.
    - Doc files/folders updated/created/archived.
    - Modules skipped (non-source, vendor, generated) and why.
-   - **Screenshot placeholders** added/updated/removed, and which were auto-captured.
+   - **Screenshot Modification Table** (see 6.1 above) listing all screenshot actions.
+   - **Auto-capture results**: For each 新增 or 替换 screenshot, report capture status (✅ 已自动截图, ⚠️ 需手动截图, or 🔲 跳过).
    - If no docs needed updating, say so explicitly.
+
+   After the summary, output the **Screenshot Modification Table** in the terminal (if applicable), then the **Screenshot Placeholder Report** (see below) reflecting the updated state of all docs.
 
 ## Auto-Capture Screenshots with Chrome DevTools MCP
 
@@ -422,6 +524,11 @@ The project is a Web App if any of these conditions match:
 - Contains a recognized frontend build tool config (`vite.config.*`, `webpack.config.*`, `next.config.*`)
 
 ### Auto-Capture Workflow
+
+**Mode selection**: The auto-capture workflow differs slightly between full generation (Mode 1) and delta update (Mode 2):
+
+- **Mode 1 (Full Generation)**: Capture ALL screenshot placeholders across all UI module docs.
+- **Mode 2 (Delta Update)**: Only capture screenshots marked **新增** or **替换** in the Screenshot Modification Table. Skip screenshots marked **保留** (unchanged) and clean up files marked **删除**.
 
 1. **Identify project startup commands**
    - Read `package.json` scripts section for dev/build/start commands
@@ -440,6 +547,12 @@ The project is a Web App if any of these conditions match:
      - Fill forms with `chrome-devtools:fill` or `chrome-devtools:fill_form`
      - Click buttons with `chrome-devtools:click`
      - Wait for elements with `chrome-devtools:wait_for`
+   - **For scroll position variants** (图Xa, 图Xb, 图Xc):
+     - Capture the initial viewport as `Xa` (page top, no scrolling needed)
+     - Use `evaluate_script` to scroll: `window.scrollTo(0, document.body.scrollHeight * 0.5)` for middle, then capture `Xb`
+     - Use `evaluate_script` to scroll: `window.scrollTo(0, document.body.scrollHeight)` for bottom, then capture `Xc`
+     - Return to top between captures: `window.scrollTo(0, 0)`
+     - **Alternative**: Use `fullPage: true` for pages where scroll segmentation is impractical — but prefer segmented captures for readability
    - Save each screenshot to the correct `截图/` directory path:
      ```
      docs/06_模块详细设计/{序号}_{模块名}/截图/X-descriptive-name.png
@@ -476,7 +589,11 @@ kill %1
 
 ## Screenshot Placeholder Report
 
-After completing document generation or update, output a summary table in the terminal listing all documents that contain screenshot placeholders:
+After completing document generation or update, output a summary table in the terminal.
+
+### Mode 1 (Full Generation) Report Format
+
+List all documents that contain screenshot placeholders:
 
 ```
 ## 截图占位符位置清单
@@ -488,12 +605,29 @@ After completing document generation or update, output a summary table in the te
 | docs/06_模块详细设计/01_认证模块/02_登录流程.md | 2 | docs/06_模块详细设计/01_认证模块/截图/ | ⚠️ 需手动截图 |
 ```
 
-Status values:
-- **✅ 已自动截图**: Screenshots were captured and saved automatically
-- **⚠️ 需手动截图**: Placeholders exist but could not be auto-captured (not a Web App, project couldn't start, or capture failed)
-- **🔲 待截图**: Placeholders exist, auto-capture was skipped (project not identified as Web App)
+### Mode 2 (Delta Update) Report Format
 
-If no screenshot placeholders were generated (e.g., the project has no frontend/UI code), explicitly state: "本次生成的架构文档不包含前端 UI 模块，未插入截图占位符。"
+**First**, output the **Screenshot Modification Table** (see Mode 2 Step 6.1) showing all screenshot actions (新增/替换/删除/保留).
+
+**Then**, output the **Placeholder Location Report** reflecting the updated state:
+
+```
+## 截图占位符位置清单 (更新后)
+
+| 文档路径 | 占位符数量 | 截图目录 | 变更类型 | 截图状态 |
+|---------|-----------|---------|---------|---------|
+| docs/06_模块详细设计/03_用户界面/02_仪表盘.md | 3→4 | docs/06_模块详细设计/03_用户界面/截图/ | 新增1个 | ✅ 已自动截图 |
+| docs/06_模块详细设计/03_用户界面/03_设置.md | 2→2 | docs/06_模块详细设计/03_用户界面/截图/ | 替换1个 | ✅ 已自动截图 |
+| docs/06_模块详细设计/01_认证模块/02_登录流程.md | 2→1 | docs/06_模块详细设计/01_认证模块/截图/ | 删除1个 | ⚠️ 需手动替换 |
+```
+
+Status values:
+- **✅ 已自动截图**: Screenshots were captured and saved automatically via Chrome DevTools MCP
+- **⚠️ 需手动截图**: Placeholders exist but could not be auto-captured (not a Web App, project couldn't start, capture failed, or complex auth required)
+- **🔲 待截图**: Placeholders exist, auto-capture was skipped (project not identified as Web App)
+- **已删除**: Screenshot marked for deletion in delta update (file removed from `截图/`)
+
+If no screenshot placeholders were generated or updated (e.g., the project has no frontend/UI code), explicitly state: "本次生成的架构文档不包含前端 UI 模块，未插入截图占位符。"
 
 ## Staleness Check (both modes)
 
