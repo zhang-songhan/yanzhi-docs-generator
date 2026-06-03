@@ -62,6 +62,25 @@ digraph document_flow {
 
 7. **No source code in docs.** Never include raw source code (no code blocks with implementation). Use mermaid diagrams for logic flow, and natural language for module/function descriptions. The doc describes *what* and *why*, never the literal *how* of the code.
 
+7a. **Architecture and layout diagrams must use mermaid.** When representing system architecture, component layout, page structure, UI layout design, or any structural diagram, ALWAYS use mermaid diagrams (flowchart, graph, block diagram). NEVER use ASCII character drawings (`┌─┐└─┘│├┤`), plain-text boxes, or manual text-based layout diagrams. Mermaid ensures the diagrams are clean, maintainable, and consistently render across different viewers.
+
+7b. **Mermaid node names with spaces MUST use quotes.** When a mermaid node identifier contains spaces or special characters (e.g., Chinese characters, colons, parentheses), wrap the description text in double quotes inside square brackets. Failing to quote names with spaces causes mermaid rendering errors.
+
+```
+✅ CORRECT:
+    AuthCtx["AuthContext Provider"]
+    Login["用户登录流程"]
+    DB["Database (PostgreSQL)"]
+    ModuleA["01_认证模块"]
+
+❌ WRONG (will fail to render):
+    AuthCtx[AuthContext Provider]
+    Login[用户登录流程]
+    DB[Database (PostgreSQL)]
+```
+
+This applies to ALL mermaid node shapes: `[]` (rectangle), `()` (rounded), `{}` (diamond), `[()]` (circle), `[//]` (parallelogram), etc. The quoting rule is the same for all shapes.
+
 8. **Modification history on every doc.** Every document under `docs/` must begin with a modification history table (see Modification History format below).
 
 9. **Screenshot placeholders for frontend UI modules.** When documenting frontend/UI modules (pages, components, views with visual output), insert screenshot placeholders at key UI interaction points. Each placeholder MUST be followed by a markdown image link pointing to the `截图/` directory at the same directory level. If the project is a Web App, auto-capture screenshots using the `auto-capture-for-webapp:take-screenshots` skill after generating docs.
@@ -174,21 +193,34 @@ Placeholders are NOT needed for:
 Use this exact format — each placeholder MUST be followed by a markdown image link pointing to the `截图/` directory:
 
 ```
-【图X：[界面/组件名称] - [界面状态描述]，展示[具体UI元素列表]】
+【图X：[所属功能模块] - [页面/组件名称] - [当前界面状态]，[详细描述截图中的具体内容：从左到右、从上到下依次列出页面中可见的主要UI元素，包括导航栏、菜单、按钮、表单字段、表格列、数据展示区域、状态标签等，描述它们的当前状态（如已选中、已展开、已填充示例数据、为空、加载中等）]】
 
 ![图X](截图/X-descriptive-name.png)
 ```
+
+**The description MUST be detailed and specific.** A reader who cannot see the image should be able to mentally visualize the page layout from the description alone. The description must answer:
+
+1. **Which feature module** does this page/component belong to? (e.g., "听课记录模块", "问卷编辑器", "用户设置")
+2. **What specific page/component** is this? (e.g., "听课记录编辑页面", "登录弹窗", "数据筛选面板")
+3. **What state** is the interface currently in? (e.g., "默认加载状态", "表单验证失败后", "空数据列表", "下拉菜单展开")
+4. **What specific UI elements are visible?** List them in spatial order (top-to-bottom, left-to-right), including their state when relevant. Describe actual content shown (sample data, placeholder text, button labels, table headers, menu items).
 
 The image filename uses the pattern `X-descriptive-name.png` or `Xa-descriptive-name.png` where:
 - `X` is the sequential figure number (starting from 1, numbering within each `.md` file)
 - `a`, `b`, `c` (optional letter suffix) indicates scroll position variant of the same page: `a` = top/initial viewport, `b` = middle or lower section, `c` = bottom. Omit the suffix for pages captured in a single viewport.
 - `descriptive-name` is a short English slug describing the screenshot
 
-Examples:
-- `【图1：登录页面 - 默认状态，展示系统Logo、用户名输入框、密码输入框、登录按钮、忘记密码链接的整体布局】` followed by `![图1](截图/1-login-page.png)`
-- `【图2a：仪表盘主页 - 页面上半部分（初始视口），展示顶部导航栏、左侧菜单、统计卡片区域】` followed by `![图2a](截图/2a-dashboard-top.png)`
-- `【图2b：仪表盘主页 - 页面下半部分（滚动后），展示最近数据表格、活动日志列表、页脚信息】` followed by `![图2b](截图/2b-dashboard-bottom.png)`
-- `【图3：用户设置页面 - 编辑状态，展示头像上传区域、昵称输入框、邮箱修改表单、保存按钮】` followed by `![图3](截图/3-settings-edit.png)`
+Detailed examples:
+
+- `【图1：用户认证模块 - 登录页面 - 默认未登录状态，页面居中展示：顶部系统Logo与标题"智慧教研系统"，中部为白色登录卡片，卡片内从上到下依次包含用户名输入框（灰色提示文字"请输入用户名"）、密码输入框（已输入密码，显示为圆点遮盖）、蓝色"登录"按钮（全宽）、底部"忘记密码？"文字链接（右对齐）】` followed by `![图1](截图/1-login-page.png)`
+
+- `【图2a：听课记录模块 - 听课记录编辑页面 - 页面上半部分（初始视口），顶部为面包屑导航（首页 > 听课记录 > 编辑记录），主体表单区域从上到下依次包含：课程基本信息区（课程名称输入框已填充"三年级数学"、授课教师下拉框已选"张老师"、日期选择器显示"2026-06-03"）、评分维度区（三个评分维度卡片横向排列，每个卡片包含维度名称与星级评分组件）】` followed by `![图2a](截图/2a-observation-edit-top.png)`
+
+- `【图2b：听课记录模块 - 听课记录编辑页面 - 页面下半部分（滚动后），主体内容从上到下依次包含：听课笔记富文本编辑器（工具栏展开，已输入三段文字笔记，每段包含时间戳标签）、图片附件区域（三张已上传的课堂照片缩略图横向排列，每张图片右上角有删除按钮）、底部操作栏（"保存草稿"次要按钮、"提交记录"主要蓝色按钮）、页脚版权信息】` followed by `![图2b](截图/2b-observation-edit-bottom.png)`
+
+- `【图3：用户管理模块 - 用户设置页面 - 编辑状态（已修改头像），页面从上到下依次包含：顶部页面标题"个人设置"与返回按钮，主体为白色卡片式表单，表单内依次包含头像上传区域（圆形头像预览已显示新上传图片，右侧"更换头像"次要按钮）、昵称输入框（当前值"张老师"，已修改但未保存，显示蓝色修改标记）、邮箱输入框（只读灰色背景显示"zhang@example.com"，右侧"修改邮箱"链接）、页面底部固定的保存/取消按钮组】` followed by `![图3](截图/3-settings-edit.png)`
+
+- `【图4：问卷管理模块 - 问卷列表页面 - 列表包含三条数据的正常状态，页面从上到下依次包含：顶部标题栏（"我的问卷"标题 + 右侧蓝色"新建问卷"主按钮）、筛选栏（左侧三个分类标签"全部/进行中/已结束"，当前选中"全部"高亮显示，右侧搜索输入框包含搜索图标）、问卷卡片列表区（三张白色卡片垂直排列，每张卡片左侧显示问卷标题与创建时间，右侧显示状态标签"进行中"绿色/"已结束"灰色，卡片底部显示参与人数与操作按钮组）】` followed by `![图4](截图/4-survey-list.png)`
 
 ### Screenshot Count Guidelines
 
@@ -235,17 +267,17 @@ Xc-descriptive-name.png  → 页面底部（进一步滚动后）
 
 Example for a long dashboard page:
 ```
-【图2a：仪表盘主页 - 页面上半部分（初始视口），展示顶部导航栏、左侧菜单、统计卡片区域】
+【图2a：数据分析模块 - 仪表盘主页 - 页面上半部分（初始视口），顶部导航栏左侧展示系统Logo与名称"智慧教研系统"，右侧展示用户头像与下拉菜单入口（未展开）。导航栏下方为面包屑导航（首页 > 数据分析）。主内容区左侧为可折叠侧边栏菜单（当前展开，高亮选中"仪表盘"菜单项）。主内容区顶部为四张统计卡片横向排列（分别展示"今日听课次数/12"、"活跃教师/8人"、"待处理报告/3份"、"本月完成率/85%"），每张卡片包含图标、数值与标题】`
 ![图2a](截图/2a-dashboard-top.png)
 
-【图2b：仪表盘主页 - 页面下半部分（滚动后），展示最近数据表格、活动日志列表、页脚信息】
+【图2b：数据分析模块 - 仪表盘主页 - 页面下半部分（滚动后），统计卡片下方为两张并排数据表格：左侧"最近听课记录"表格（列包含：时间、教师、课程、评分、状态，展示最新5条数据，分页器位于表格底部），右侧"今日日程"卡片列表（展示3项日程，每项包含时间段标签与活动名称，当前时间项高亮蓝色边框）。页面底部为页脚区域（版权信息"© 2026 智慧教研"、技术支持的链接）】`
 ![图2b](截图/2b-dashboard-bottom.png)
 ```
 
 **Single-page screenshots (no scroll variants):**
 For short pages whose entire content fits within one viewport (e.g., login page, simple form), use a single numbered placeholder without letter suffix:
 ```
-【图1：登录页面 - 默认状态，展示Logo、输入框、按钮布局】
+【图1：用户认证模块 - 登录页面 - 默认未登录状态，页面居中展示：顶部系统Logo与标题，中部白色卡片内包含用户名输入框（灰色提示文字）、密码输入框、蓝色登录按钮，底部"忘记密码？"链接】
 ![图1](截图/1-login-page.png)
 ```
 
@@ -352,7 +384,9 @@ Run when `docs/` does not exist or is empty.
 
 8. **Logic Representation (mermaid)**
 
-   Use mermaid diagrams to represent all logic. Required diagram types:
+   Use mermaid diagrams to represent all logic, architecture, and layout structures. NEVER use ASCII character drawings (`┌─┐└─┘│├┤`) for any diagram — mermaid ensures clean, maintainable, and consistently rendered output.
+
+   Required diagram types:
 
    | Logic Type | Mermaid Diagram |
    |------------|----------------|
@@ -361,9 +395,25 @@ Run when `docs/` does not exist or is empty.
    | Data entities & relationships | `erDiagram` |
    | State machines | `stateDiagram-v2` |
    | Class/module structure | `classDiagram` |
-   | System boundaries | `flowchart` with subgraphs |
+   | System boundaries / architecture | `flowchart` with subgraphs |
+   | Page layout design / UI structure | `graph` or `flowchart` with subgraphs |
 
    Every module overview must include at least one flowchart showing the module's internal flow.
+
+   **Mermaid quoting rules (CRITICAL):** When a node identifier contains spaces, Chinese characters, colons, parentheses, or any special characters, the display text MUST be wrapped in double quotes inside the brackets:
+   ```
+   ✅ CORRECT:
+       AuthCtx["AuthContext Provider"]
+       Login["用户登录流程"]
+       DB["Database (PostgreSQL)"]
+       ModuleA["01_认证模块"]
+
+   ❌ WRONG (will cause rendering failure):
+       AuthCtx[AuthContext Provider]
+       Login[用户登录流程]
+       DB[Database (PostgreSQL)]
+   ```
+   This rule applies to ALL node shapes: `[]` (rectangle), `()` (rounded corners), `{}` (diamond), `[()]` (circle), `[//]` (parallelogram), etc.
 
 9. **Coverage validation**
    - Produce a coverage matrix in `docs/05_实现指南/02_模块目录.md` mapping every discovered source module to a documentation target folder.
@@ -479,4 +529,4 @@ After completing either mode, compare doc freshness against the project:
 
 ## Output Quality Bar
 
-The documentation must provide enough architectural, interface, and behavioral detail for full-project reconstruction without reading the original code — whether generated fresh or updated incrementally. Logic must be expressed through mermaid diagrams and natural language descriptions, never raw source code. Frontend UI documentation must include screenshot placeholders so that visual layout, component states, and user interaction flows can be understood without running the application.
+The documentation must provide enough architectural, interface, and behavioral detail for full-project reconstruction without reading the original code — whether generated fresh or updated incrementally. Logic must be expressed through mermaid diagrams and natural language descriptions, never raw source code. Architecture and layout diagrams must use mermaid — ASCII character drawings are strictly forbidden. All mermaid node names containing spaces or special characters must be wrapped in double quotes. Frontend UI documentation must include detailed screenshot placeholders that specify the feature module, page/component name, UI state, and a spatial description of all visible UI elements, so that a reader can mentally visualize the page layout without seeing the image.
