@@ -64,7 +64,7 @@ digraph document_flow {
 
 7a. **Architecture and layout diagrams must use mermaid.** When representing system architecture, component layout, page structure, UI layout design, or any structural diagram, ALWAYS use mermaid diagrams (flowchart, graph, block diagram). NEVER use ASCII character drawings (`┌─┐└─┘│├┤`), plain-text boxes, or manual text-based layout diagrams. Mermaid ensures the diagrams are clean, maintainable, and consistently render across different viewers.
 
-7b. **Mermaid node names with spaces MUST use quotes.** When a mermaid node identifier contains spaces or special characters (e.g., Chinese characters, colons, parentheses), wrap the description text in double quotes inside square brackets. Failing to quote names with spaces causes mermaid rendering errors.
+7b. **Mermaid node names with spaces MUST use quotes; inner quotes MUST be escaped.** When a mermaid node identifier contains spaces or special characters (e.g., Chinese characters, colons, parentheses), wrap the description text in double quotes inside square brackets. When the node text itself contains double-quote characters (e.g., Chinese quotation marks `""` around a term), those inner quotes MUST be HTML-escaped as `&quot;` within the outer quotes. Failing to quote names or escape inner quotes causes mermaid rendering errors.
 
 ```
 ✅ CORRECT:
@@ -72,14 +72,16 @@ digraph document_flow {
     Login["用户登录流程"]
     DB["Database (PostgreSQL)"]
     ModuleA["01_认证模块"]
+    ExportBtn["点击&quot;导出Word&quot;按钮"]
 
 ❌ WRONG (will fail to render):
     AuthCtx[AuthContext Provider]
     Login[用户登录流程]
     DB[Database (PostgreSQL)]
+    ExportBtn["点击"导出Word"按钮"]
 ```
 
-This applies to ALL mermaid node shapes: `[]` (rectangle), `()` (rounded), `{}` (diamond), `[()]` (circle), `[//]` (parallelogram), etc. The quoting rule is the same for all shapes.
+This applies to ALL mermaid node shapes: `[]` (rectangle), `()` (rounded), `{}` (diamond), `[()]` (circle), `[//]` (parallelogram), etc. The quoting and escaping rules are the same for all shapes.
 
 8. **Modification history on every doc.** Every document under `docs/` must begin with a modification history table (see Modification History format below).
 
@@ -193,29 +195,30 @@ Placeholders are NOT needed for:
 Use this exact format — each placeholder MUST be followed by a markdown image link pointing to the `截图/` directory:
 
 ```
-【图X：[所属功能模块] - [页面/组件名称] - [当前界面状态]，[详细描述截图中的具体内容：从左到右、从上到下依次列出页面中可见的主要UI元素，包括导航栏、菜单、按钮、表单字段、表格列、数据展示区域、状态标签等，描述它们的当前状态（如已选中、已展开、已填充示例数据、为空、加载中等）]】
+【图X：[所属功能模块] - [页面/组件名称] - [当前界面状态]，[简要描述页面整体布局，约30字]】
 
 ![图X](截图/X-descriptive-name.png)
 ```
 
-**The description MUST be detailed and specific.** A reader who cannot see the image should be able to mentally visualize the page layout from the description alone. The description must answer:
+**The description should be brief** — describe the overall page layout and module context at a high level. Do NOT enumerate individual UI widgets, color HEX codes, button labels, or pixel-level details. A reader should understand which page this is and its general structure, not reconstruct every pixel.
 
-1. **Which feature module** does this page/component belong to? (e.g., "听课记录模块", "问卷编辑器", "用户设置")
-2. **What specific page/component** is this? (e.g., "听课记录编辑页面", "登录弹窗", "数据筛选面板")
-3. **What state** is the interface currently in? (e.g., "默认加载状态", "表单验证失败后", "空数据列表", "下拉菜单展开")
-4. **What specific UI elements are visible?** List them in spatial order (top-to-bottom, left-to-right), including their state when relevant. Describe actual content shown (sample data, placeholder text, button labels, table headers, menu items).
+The description must answer:
+1. **Which feature module** does this page belong to? (e.g., "听课记录模块", "用户设置")
+2. **What page/component** is this? (e.g., "编辑页面", "登录弹窗")
+3. **What state** is the interface in? (e.g., "默认状态", "空数据列表")
+4. **What is the overall layout?** (e.g., "顶部导航+左侧菜单+主内容区三栏布局")
 
 The image filename uses the pattern `X-descriptive-name.png` where:
 - `X` is the sequential figure number (starting from 1, numbering within each `.md` file)
 - `descriptive-name` is a short English slug describing the screenshot
 
-Detailed examples:
+Brief examples:
 
-- `【图1：用户认证模块 - 登录页面 - 默认未登录状态，页面居中展示：顶部系统Logo与标题"智慧教研系统"，中部为白色登录卡片，卡片内从上到下依次包含用户名输入框（灰色提示文字"请输入用户名"）、密码输入框（已输入密码，显示为圆点遮盖）、蓝色"登录"按钮（全宽）、底部"忘记密码？"文字链接（右对齐）】` followed by `![图1](截图/1-login-page.png)`
+- `【图1：用户认证模块 - 登录页面 - 默认状态，页面居中展示Logo与登录表单，包含用户名、密码输入框及登录按钮】` followed by `![图1](截图/1-login-page.png)`
 
-- `【图2：用户管理模块 - 用户设置页面 - 编辑状态（已修改头像），页面从上到下依次包含：顶部页面标题"个人设置"与返回按钮，主体为白色卡片式表单，表单内依次包含头像上传区域（圆形头像预览已显示新上传图片，右侧"更换头像"次要按钮）、昵称输入框（当前值"张老师"，已修改但未保存，显示蓝色修改标记）、邮箱输入框（只读灰色背景显示"zhang@example.com"，右侧"修改邮箱"链接）、页面底部固定的保存/取消按钮组】` followed by `![图2](截图/2-settings-edit.png)`
+- `【图2：用户管理模块 - 设置页面 - 编辑状态，顶部标题栏+主体卡片式表单布局，包含头像、昵称、邮箱等设置项】` followed by `![图2](截图/2-settings-edit.png)`
 
-- `【图3：问卷管理模块 - 问卷列表页面 - 列表包含三条数据的正常状态，页面从上到下依次包含：顶部标题栏（"我的问卷"标题 + 右侧蓝色"新建问卷"主按钮）、筛选栏（左侧三个分类标签"全部/进行中/已结束"，当前选中"全部"高亮显示，右侧搜索输入框包含搜索图标）、问卷卡片列表区（三张白色卡片垂直排列，每张卡片左侧显示问卷标题与创建时间，右侧显示状态标签"进行中"绿色/"已结束"灰色，卡片底部显示参与人数与操作按钮组）】` followed by `![图3](截图/3-survey-list.png)`
+- `【图3：问卷管理模块 - 列表页面 - 三条数据，顶部标题栏与筛选区+下方卡片列表布局，每张卡片展示标题、时间与状态】` followed by `![图3](截图/3-survey-list.png)`
 
 ### Screenshot Count Guidelines
 
@@ -354,18 +357,20 @@ Run when `docs/` does not exist or is empty.
 
    Every module overview must include at least one flowchart showing the module's internal flow.
 
-   **Mermaid quoting rules (CRITICAL):** When a node identifier contains spaces, Chinese characters, colons, parentheses, or any special characters, the display text MUST be wrapped in double quotes inside the brackets:
+   **Mermaid quoting rules (CRITICAL):** When a node identifier contains spaces, Chinese characters, colons, parentheses, or any special characters, the display text MUST be wrapped in double quotes inside the brackets. When the node text itself contains double-quote characters (e.g., Chinese quotation marks `""` around a term), those inner quotes MUST be HTML-escaped as `&quot;` within the outer quotes. Failing to quote names or escape inner quotes causes mermaid rendering errors:
    ```
    ✅ CORRECT:
        AuthCtx["AuthContext Provider"]
        Login["用户登录流程"]
        DB["Database (PostgreSQL)"]
        ModuleA["01_认证模块"]
+       ExportBtn["点击&quot;导出Word&quot;按钮"]
 
    ❌ WRONG (will cause rendering failure):
        AuthCtx[AuthContext Provider]
        Login[用户登录流程]
        DB[Database (PostgreSQL)]
+       ExportBtn["点击"导出Word"按钮"]
    ```
    This rule applies to ALL node shapes: `[]` (rectangle), `()` (rounded corners), `{}` (diamond), `[()]` (circle), `[//]` (parallelogram), etc.
 
@@ -483,4 +488,4 @@ After completing either mode, compare doc freshness against the project:
 
 ## Output Quality Bar
 
-The documentation must provide enough architectural, interface, and behavioral detail for full-project reconstruction without reading the original code — whether generated fresh or updated incrementally. Logic must be expressed through mermaid diagrams and natural language descriptions, never raw source code. Architecture and layout diagrams must use mermaid — ASCII character drawings are strictly forbidden. All mermaid node names containing spaces or special characters must be wrapped in double quotes. Frontend UI documentation must include detailed screenshot placeholders that specify the feature module, page/component name, UI state, and a spatial description of all visible UI elements, so that a reader can mentally visualize the page layout without seeing the image.
+The documentation must provide enough architectural, interface, and behavioral detail for full-project reconstruction without reading the original code — whether generated fresh or updated incrementally. Logic must be expressed through mermaid diagrams and natural language descriptions, never raw source code. Architecture and layout diagrams must use mermaid — ASCII character drawings are strictly forbidden. All mermaid node names containing spaces or special characters must be wrapped in double quotes, and inner double-quote characters must be HTML-escaped as `&quot;`. Frontend UI documentation must include screenshot placeholders that identify the feature module, page/component name, UI state, and overall layout structure at a high level.
