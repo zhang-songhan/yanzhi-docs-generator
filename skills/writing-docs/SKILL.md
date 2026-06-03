@@ -205,26 +205,21 @@ Use this exact format — each placeholder MUST be followed by a markdown image 
 3. **What state** is the interface currently in? (e.g., "默认加载状态", "表单验证失败后", "空数据列表", "下拉菜单展开")
 4. **What specific UI elements are visible?** List them in spatial order (top-to-bottom, left-to-right), including their state when relevant. Describe actual content shown (sample data, placeholder text, button labels, table headers, menu items).
 
-The image filename uses the pattern `X-descriptive-name.png` or `Xa-descriptive-name.png` where:
+The image filename uses the pattern `X-descriptive-name.png` where:
 - `X` is the sequential figure number (starting from 1, numbering within each `.md` file)
-- `a`, `b`, `c` (optional letter suffix) indicates scroll position variant of the same page: `a` = top/initial viewport, `b` = middle or lower section, `c` = bottom. Omit the suffix for pages captured in a single viewport.
 - `descriptive-name` is a short English slug describing the screenshot
 
 Detailed examples:
 
 - `【图1：用户认证模块 - 登录页面 - 默认未登录状态，页面居中展示：顶部系统Logo与标题"智慧教研系统"，中部为白色登录卡片，卡片内从上到下依次包含用户名输入框（灰色提示文字"请输入用户名"）、密码输入框（已输入密码，显示为圆点遮盖）、蓝色"登录"按钮（全宽）、底部"忘记密码？"文字链接（右对齐）】` followed by `![图1](截图/1-login-page.png)`
 
-- `【图2a：听课记录模块 - 听课记录编辑页面 - 页面上半部分（初始视口），顶部为面包屑导航（首页 > 听课记录 > 编辑记录），主体表单区域从上到下依次包含：课程基本信息区（课程名称输入框已填充"三年级数学"、授课教师下拉框已选"张老师"、日期选择器显示"2026-06-03"）、评分维度区（三个评分维度卡片横向排列，每个卡片包含维度名称与星级评分组件）】` followed by `![图2a](截图/2a-observation-edit-top.png)`
+- `【图2：用户管理模块 - 用户设置页面 - 编辑状态（已修改头像），页面从上到下依次包含：顶部页面标题"个人设置"与返回按钮，主体为白色卡片式表单，表单内依次包含头像上传区域（圆形头像预览已显示新上传图片，右侧"更换头像"次要按钮）、昵称输入框（当前值"张老师"，已修改但未保存，显示蓝色修改标记）、邮箱输入框（只读灰色背景显示"zhang@example.com"，右侧"修改邮箱"链接）、页面底部固定的保存/取消按钮组】` followed by `![图2](截图/2-settings-edit.png)`
 
-- `【图2b：听课记录模块 - 听课记录编辑页面 - 页面下半部分（滚动后），主体内容从上到下依次包含：听课笔记富文本编辑器（工具栏展开，已输入三段文字笔记，每段包含时间戳标签）、图片附件区域（三张已上传的课堂照片缩略图横向排列，每张图片右上角有删除按钮）、底部操作栏（"保存草稿"次要按钮、"提交记录"主要蓝色按钮）、页脚版权信息】` followed by `![图2b](截图/2b-observation-edit-bottom.png)`
-
-- `【图3：用户管理模块 - 用户设置页面 - 编辑状态（已修改头像），页面从上到下依次包含：顶部页面标题"个人设置"与返回按钮，主体为白色卡片式表单，表单内依次包含头像上传区域（圆形头像预览已显示新上传图片，右侧"更换头像"次要按钮）、昵称输入框（当前值"张老师"，已修改但未保存，显示蓝色修改标记）、邮箱输入框（只读灰色背景显示"zhang@example.com"，右侧"修改邮箱"链接）、页面底部固定的保存/取消按钮组】` followed by `![图3](截图/3-settings-edit.png)`
-
-- `【图4：问卷管理模块 - 问卷列表页面 - 列表包含三条数据的正常状态，页面从上到下依次包含：顶部标题栏（"我的问卷"标题 + 右侧蓝色"新建问卷"主按钮）、筛选栏（左侧三个分类标签"全部/进行中/已结束"，当前选中"全部"高亮显示，右侧搜索输入框包含搜索图标）、问卷卡片列表区（三张白色卡片垂直排列，每张卡片左侧显示问卷标题与创建时间，右侧显示状态标签"进行中"绿色/"已结束"灰色，卡片底部显示参与人数与操作按钮组）】` followed by `![图4](截图/4-survey-list.png)`
+- `【图3：问卷管理模块 - 问卷列表页面 - 列表包含三条数据的正常状态，页面从上到下依次包含：顶部标题栏（"我的问卷"标题 + 右侧蓝色"新建问卷"主按钮）、筛选栏（左侧三个分类标签"全部/进行中/已结束"，当前选中"全部"高亮显示，右侧搜索输入框包含搜索图标）、问卷卡片列表区（三张白色卡片垂直排列，每张卡片左侧显示问卷标题与创建时间，右侧显示状态标签"进行中"绿色/"已结束"灰色，卡片底部显示参与人数与操作按钮组）】` followed by `![图3](截图/3-survey-list.png)`
 
 ### Screenshot Count Guidelines
 
-Base counts (before scroll variants):
+Screenshot counts:
 
 | UI Scope | Base Screenshot Count |
 |----------|-----------------|
@@ -232,54 +227,14 @@ Base counts (before scroll variants):
 | Medium (4-10 pages/views) | 6-15 screenshots |
 | Large (11+ pages/views) | 15-25 screenshots |
 
-**Scroll multiplier**: For each page whose content extends beyond 1.5× viewport height, add 1-2 extra screenshots to cover scroll positions (see Scroll Position Coverage above). The total count per module doc should reflect: `base_count + scroll_variants`.
-
-Example: A medium project with 6 pages, 3 of which are long/scrollable → 10-18 base + 3-6 scroll variants = 13-24 total screenshots.
-
 Priority for screenshots in architecture docs:
 1. Main page / entry view (logged-in and logged-out states)
-2. Core feature pages (main interaction views, **covering full page content across multiple scroll positions if needed**)
-3. Scroll-depth coverage for long pages — capture top, middle, and bottom sections to document full page layout
-4. Key interaction states (form validation, loading, empty, error states)
-5. Complex dialogs or modals
-6. Data visualization or result views
-7. Navigation structure (menu, breadcrumb, tab switching)
-8. Settings/configuration pages
-
-### Scroll Position Coverage
-
-Architecture documentation must capture the **complete layout** of each page. A single viewport screenshot cannot capture long/scrollable pages. For any page whose content extends beyond one viewport height, capture multiple screenshots at different scroll positions.
-
-**When to capture multiple scroll positions:**
-- Page content height > 1.5× viewport height → Capture at least 2 screenshots (top + bottom)
-- Page content height > 3× viewport height → Capture at least 3 screenshots (top + middle + bottom)
-- Page has distinct layout sections separated by scroll (e.g., hero section → feature grid → footer) → Capture one per major section
-- Dashboard or data pages with multiple widget/grid rows → Capture each logical row group
-
-**Scroll position naming convention:**
-Use letter suffixes (`a`, `b`, `c`) after the figure number for scroll variants of the same page:
-
-```
-Xa-descriptive-name.png  → 页面上半部分（初始视口）
-Xb-descriptive-name.png  → 页面下半部分（滚动后）或中部
-Xc-descriptive-name.png  → 页面底部（进一步滚动后）
-```
-
-Example for a long dashboard page:
-```
-【图2a：数据分析模块 - 仪表盘主页 - 页面上半部分（初始视口），顶部导航栏左侧展示系统Logo与名称"智慧教研系统"，右侧展示用户头像与下拉菜单入口（未展开）。导航栏下方为面包屑导航（首页 > 数据分析）。主内容区左侧为可折叠侧边栏菜单（当前展开，高亮选中"仪表盘"菜单项）。主内容区顶部为四张统计卡片横向排列（分别展示"今日听课次数/12"、"活跃教师/8人"、"待处理报告/3份"、"本月完成率/85%"），每张卡片包含图标、数值与标题】`
-![图2a](截图/2a-dashboard-top.png)
-
-【图2b：数据分析模块 - 仪表盘主页 - 页面下半部分（滚动后），统计卡片下方为两张并排数据表格：左侧"最近听课记录"表格（列包含：时间、教师、课程、评分、状态，展示最新5条数据，分页器位于表格底部），右侧"今日日程"卡片列表（展示3项日程，每项包含时间段标签与活动名称，当前时间项高亮蓝色边框）。页面底部为页脚区域（版权信息"© 2026 智慧教研"、技术支持的链接）】`
-![图2b](截图/2b-dashboard-bottom.png)
-```
-
-**Single-page screenshots (no scroll variants):**
-For short pages whose entire content fits within one viewport (e.g., login page, simple form), use a single numbered placeholder without letter suffix:
-```
-【图1：用户认证模块 - 登录页面 - 默认未登录状态，页面居中展示：顶部系统Logo与标题，中部白色卡片内包含用户名输入框（灰色提示文字）、密码输入框、蓝色登录按钮，底部"忘记密码？"链接】
-![图1](截图/1-login-page.png)
-```
+2. Core feature pages (main interaction views)
+3. Key interaction states (form validation, loading, empty, error states)
+4. Complex dialogs or modals
+5. Data visualization or result views
+6. Navigation structure (menu, breadcrumb, tab switching)
+7. Settings/configuration pages
 
 ### Auto-Capture with take-screenshots Skill
 
@@ -288,7 +243,7 @@ When the project is a **Web App** (detected by presence of `.html`, `.tsx`, `.js
 **REQUIRED SKILL:** Use `auto-capture-for-webapp:take-screenshots` for screenshot automation. This skill handles:
 - Starting the dev server and waiting for readiness
 - Navigating to each page/route
-- Capturing screenshots at specified scroll positions
+- Capturing screenshots for each placeholder
 - Saving screenshots to the correct `截图/` directories
 - Graceful error handling and cleanup
 
@@ -339,7 +294,6 @@ Run when `docs/` does not exist or is empty.
 4. **Insert Screenshot Placeholders**
    - For every frontend/UI module doc file, insert screenshot placeholders at key UI interaction points (see Screenshot Placeholder Format).
    - Place placeholders after the natural language description of each page/view/component, before the next section.
-   - **For long/scrollable pages**: Insert multiple placeholders covering different scroll positions (see Scroll Position Coverage above). Use `Xa`, `Xb`, `Xc` letter suffixes for scroll variants of the same page.
    - Create the `截图/` subdirectory in each module folder that has frontend UI content.
 
 5. **Auto-Capture Screenshots (Web App projects)**
@@ -494,9 +448,9 @@ Run when `docs/` exists with detailed documentation.
 
    When the changed source files include frontend/UI code, update screenshot placeholders based on the change classification from Step 3:
 
-   - **New UI pages/views** (新增) → Insert new screenshot placeholders following the Screenshot Placeholder Format. For long/scrollable pages, include scroll position variants (图Xa, 图Xb, ...) following the Scroll Position Coverage guidelines. Add them to the `截图/` directory at the module folder level.
-   - **Modified UI** (替换) → Update existing placeholder descriptions to reflect the new UI state. If the page layout changed significantly (e.g., content added/removed that affects scroll height), reassess scroll position coverage — add or remove scroll variants as needed.
-   - **Removed UI pages/views** (删除) → Remove their placeholders (including all scroll variants).
+   - **New UI pages/views** (新增) → Insert new screenshot placeholders following the Screenshot Placeholder Format. Add them to the `截图/` directory at the module folder level.
+   - **Modified UI** (替换) → Update existing placeholder descriptions to reflect the new UI state.
+   - **Removed UI pages/views** (删除) → Remove their placeholders.
    - **Renumbering**: If ANY placeholder was added or deleted within a doc file, renumber ALL placeholders in that file from 图1 upward in ascending order. Do NOT keep gaps or skip numbers. If only descriptions were updated (same count, no additions/removals), keep the original numbering.
    - If a module that now has UI content didn't previously have a `截图/` directory, create it.
 
