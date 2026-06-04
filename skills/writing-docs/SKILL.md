@@ -560,10 +560,10 @@ Run when `docs/` exists with detailed documentation.
    | New backend module (no UI) | Add new module docs | No screenshot needed |
    | Backend logic changed (no UI impact) | Update module docs | No screenshot needed |
    | UI redesign (structural) | Rewrite affected docs | **替换** — Replace ALL affected screenshots |
-   | UI module doc has NO screenshots at all | Flag as **缺失截图** | **补加** — Insert placeholders for ALL pages/views in this doc (see Step 7a) |
+   | UI module doc has NO screenshots at all | Flag as **缺失截图** | **补加** — Insert placeholders for ALL pages/views in this doc (see Step 8a) |
    | Config/deployment change | Update architecture/runtime docs | No screenshot needed |
 
-   **CRITICAL: After classifying changes, update screenshot placeholders** (see Step 7 below) to reflect additions, replacements, or deletions.
+   **CRITICAL: After classifying changes, update screenshot placeholders** (see Step 8 below) to reflect additions, replacements, or deletions.
 
 5. **Read and Analyze Affected Docs**
 
@@ -585,7 +585,37 @@ Run when `docs/` exists with detailed documentation.
    - **Index** — update `docs/README.md` if new doc files/folders were added or removed.
    - **Modification history** — append a new row to the history table in every affected document. Use git username from `git config user.name`.
 
-7. **Update Screenshot Placeholders (for GUI projects: MUST audit ALL docs)**
+7. **Audit Existing Screenshots (GUI projects only)**
+
+   **For GUI projects**, after reading all old docs and understanding the full context, perform a systematic audit of ALL existing screenshot placeholders before making any changes. Cross-reference each existing screenshot with the current source code to determine its fate.
+
+   For each screenshot placeholder found in old docs:
+   - **Does the source page/component still exist?** → No → mark **删除**
+   - **Has the page/component been visually modified?** → Yes → mark **替换**
+   - **Has the page/component changed logic-only (no visual change)?** → Yes → mark **保留**
+   - **The page exists and was not meaningfully modified?** → mark **保留**
+
+   For new UI pages/components that have no corresponding placeholder:
+   - mark **新增**
+
+   Produce a structured audit table before making any actual changes:
+
+   ```markdown
+   ### Screenshot Change Plan
+
+   | 图编号 | 文件名 | 所属模块 | 操作 | 原因 |
+   |--------|--------|----------|------|------|
+   | 图1 | 1-login-page.png | 01_认证模块 | 保留 | 页面未变更 |
+   | 图2 | 2-dashboard.png | 03_仪表盘 | 替换 | 布局改为双栏 |
+   | 图3 | 3-old-settings.png | 04_设置 | 删除 | 设置页面已移除 |
+   | 图4 | 4-new-report.png | 05_报表 | 新增 | 新增报表页面 |
+   ```
+
+   This audit serves as the plan — actual placeholder insertion/update/removal happens in Step 8.
+
+   **For non-GUI projects**, skip this step.
+
+8. **Update Screenshot Placeholders**
 
    **CRITICAL — GUI project full audit:** If the project is a GUI-type project (has any frontend/UI code — web pages, mobile screens, desktop windows, WPF, etc., as defined in "When to Insert Placeholders"), do NOT limit screenshot checks to only docs mapped to changed source files. Instead:
 
@@ -595,13 +625,13 @@ Run when `docs/` exists with detailed documentation.
 
    **For non-GUI projects**, only update screenshot placeholders for docs mapped to changed source files (based on change classification from Step 4 AND the missing screenshot check from Step 5).
 
-   **7a. Handle missing screenshots (缺失截图) first — before processing individual changes:**
+   **8a. Handle missing screenshots (缺失截图) first — before processing individual changes:**
 
    For all docs flagged as **缺失截图** (old docs never had screenshot placeholders for a UI module):
    - Insert screenshot placeholders for ALL pages/views/components described in that doc file, following the Screenshot Placeholder Format.
    - Create the `截图/` directory at the module folder level if it doesn't exist.
 
-   **7b. Then process change classifications from Step 4:**
+   **8b. Then execute the audit plan from Step 7 and process change classifications from Step 4:**
 
    - **New UI pages/views** (新增) → Insert new screenshot placeholders following the Screenshot Placeholder Format. Add them to the `截图/` directory at the module folder level.
    - **Modified UI** (替换) → Update existing placeholder descriptions to reflect the new UI state. If no placeholder exists yet for this page (it was undocumented), create one as 新增 instead.
@@ -609,19 +639,34 @@ Run when `docs/` exists with detailed documentation.
    - **Renumbering**: If ANY placeholder was added or deleted within a doc file, renumber ALL placeholders in that file from 图1 upward in ascending order. Do NOT keep gaps or skip numbers. If only descriptions were updated (same count, no additions/removals), keep the original numbering.
    - If a module that now has UI content didn't previously have a `截图/` directory, create it.
 
-8. **Auto-Capture Updated Screenshots (Web App projects)**
+9. **Auto-Capture Updated Screenshots (Web App projects)**
    - If the project is a Web App and frontend/UI code was changed, use the `auto-capture-for-webapp:take-screenshots` skill to auto-capture updated screenshots.
-   - Only capture screenshots for placeholders marked 新增 or 替换 (from Step 4). Skip 保留 placeholders and clean up 删除 files.
+   - Only capture screenshots for placeholders marked 新增 or 替换 (from Step 7 audit). Skip 保留 placeholders and clean up 删除 files.
    - Invoke the skill with the project source path and the list of affected screenshot placeholders.
    - If the `take-screenshots` skill is not available or the project cannot be started, skip auto-capture.
 
-9. **Final Summary**
+10. **Final Summary**
 
-   Report:
-   - Source files detected as changed.
-   - Doc files/folders updated/created/archived.
-   - Modules skipped (non-source, vendor, generated) and why.
-   - If no docs needed updating, say so explicitly.
+    Report:
+    - Source files detected as changed.
+    - Doc files/folders updated/created/archived.
+    - Modules skipped (non-source, vendor, generated) and why.
+    - If no docs needed updating, say so explicitly.
+    - **Screenshot change report (GUI projects)**: List ALL screenshot changes with their final status, using the audit table format from Step 7:
+
+    ```markdown
+    ### Screenshot Change Report
+
+    | 图编号 | 文件名 | 所属模块 | 操作 | 状态 |
+    |--------|--------|----------|------|------|
+    | 图1 | 1-login-page.png | 01_认证模块 | 保留 | ✅ 未变 |
+    | 图2 | 2-dashboard.png | 03_仪表盘 | 替换 | ⚠️ 已更新描述 |
+    | 图3 | 3-old-settings.png | 04_设置 | 删除 | ❌ 已移除占位符 |
+    | 图4 | 4-new-report.png | 05_报表 | 新增 | ✅ 已插入占位符 |
+    | 图5 | 5-profile.png | 02_用户管理 | 补加 | ✅ 补充遗漏 |
+    ```
+
+    For non-GUI projects, state that no screenshot changes apply.
 
 ## Staleness Check (both modes)
 
