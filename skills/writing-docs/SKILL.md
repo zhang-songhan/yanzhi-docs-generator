@@ -11,10 +11,17 @@ Generate or incrementally update project documents from the codebase into `docs/
 
 ```dot
 digraph document_flow {
+    "Git init + commits + clean working tree?" [shape=diamond];
+    "Reject: show error and stop" [shape=box];
     "docs/ exists with docs?" [shape=diamond];
+    "Read old anchor.txt from docs/" [shape=box];
+    "Save current branch/commit/msg to docs/anchor.txt (overwrite)" [shape=box];
     "Full document generation" [shape=box];
-    "Check git diff (last 3 commits)" [shape=box];
-    "Meaningful changes?" [shape=diamond];
+    "Parse old branch + commit?" [shape=diamond];
+    "Ask user for old branch/commit" [shape=box];
+    "Same branch?" [shape=diamond];
+    "Reject: branch mismatch error" [shape=box];
+    "git log + git diff old..new to summarize changes" [shape=box];
     "Delta update docs/" [shape=box];
     "Report: no changes" [shape=box];
     "Has frontend/UI code?" [shape=diamond];
@@ -25,12 +32,21 @@ digraph document_flow {
     "Ask user: refactor entire docs?" [shape=box];
     "Done" [shape=doublecircle];
 
-    "docs/ exists with docs?" -> "Full document generation" [label="no or empty"];
-    "docs/ exists with docs?" -> "Check git diff (last 3 commits)" [label="yes"];
+    "Git init + commits + clean working tree?" -> "Reject: show error and stop" [label="no"];
+    "Git init + commits + clean working tree?" -> "docs/ exists with docs?" [label="yes"];
+    "docs/ exists with docs?" -> "Read old anchor.txt from docs/" [label="yes"];
+    "docs/ exists with docs?" -> "Save current branch/commit/msg to docs/anchor.txt (overwrite)" [label="no or empty"];
+    "Read old anchor.txt from docs/" -> "Save current branch/commit/msg to docs/anchor.txt (overwrite)";
+    "Save current branch/commit/msg to docs/anchor.txt (overwrite)" -> "Full document generation" [label="Mode 1"];
+    "Save current branch/commit/msg to docs/anchor.txt (overwrite)" -> "Parse old branch + commit?" [label="Mode 2"];
     "Full document generation" -> "Has frontend/UI code?";
-    "Check git diff (last 3 commits)" -> "Meaningful changes?";
-    "Meaningful changes?" -> "Delta update docs/" [label="yes"];
-    "Meaningful changes?" -> "Report: no changes" [label="no"];
+    "Parse old branch + commit?" -> "Ask user for old branch/commit" [label="no"];
+    "Parse old branch + commit?" -> "Same branch?" [label="yes"];
+    "Ask user for old branch/commit" -> "Same branch?";
+    "Same branch?" -> "Reject: branch mismatch error" [label="no"];
+    "Same branch?" -> "git log + git diff old..new to summarize changes" [label="yes"];
+    "git log + git diff old..new to summarize changes" -> "Delta update docs/" [label="has changes"];
+    "git log + git diff old..new to summarize changes" -> "Report: no changes" [label="same commit"];
     "Delta update docs/" -> "Has frontend/UI code?";
     "Has frontend/UI code?" -> "Insert screenshot placeholders in UI docs" [label="yes"];
     "Has frontend/UI code?" -> "Check staleness" [label="no"];
@@ -39,6 +55,8 @@ digraph document_flow {
     "Web App project?" -> "Check staleness" [label="no"];
     "Auto-capture via take-screenshots skill" -> "Check staleness";
     "Report: no changes" -> "Check staleness";
+    "Reject: show error and stop" -> "Done";
+    "Reject: branch mismatch error" -> "Done";
     "Check staleness" -> "Ask user: refactor entire docs?" [label="most docs stale"];
     "Check staleness" -> "Done" [label="fresh enough"];
     "Ask user: refactor entire docs?" -> "Full document generation" [label="yes"];
@@ -149,6 +167,7 @@ The docs directory uses a numbered Chinese folder hierarchy, organized by domain
 ```
 docs/
 ├── README.md                                       # 导航索引（不含序号前缀）
+├── anchor.txt                                      # Git 基准版本信息（分支名 + commit hash + commit message）
 ├── 01_产品需求文档/
 │   └── 01_产品需求文档.md                            # PRD：系统概述、能力清单、用户故事、非功能需求
 ├── 02_核心业务流程/
@@ -287,11 +306,79 @@ If the `take-screenshots` skill is not available, or the project cannot be start
 - Use `everything-claude-code:plan` to draft a plan before your actions.
 - **No source code** — represent logic with mermaid diagrams (flowchart, sequence, class, state, ER) and describe behavior in natural language. Pseudocode is acceptable only for complex algorithms where natural language alone is ambiguous.
 
+## Pre-generation Git Validation (both modes)
+
+Before any document generation or update, verify the codebase is in a valid state.
+
+### Validation Steps
+
+Execute these checks in order. If ANY check fails, reject and stop immediately.
+
+1. **Check git initialization**: `git rev-parse --git-dir`
+   - If the command fails → **Reject**: "项目未初始化 Git，请先执行 `git init` 并提交代码后再生成文档。"
+
+2. **Check commit history**: `git rev-list --count HEAD`
+   - If the count is 0 or the command fails → **Reject**: "项目尚无任何 commit 记录，请先提交代码后再生成文档。"
+
+3. **Check working tree is clean**: `git diff HEAD --stat`
+   - If there are ANY differences (uncommitted changes) → **Reject**: "当前工作区存在未提交的变更，请先提交所有变更后再生成文档。未提交的文件：[列出差异文件列表]"
+
+All three checks must pass before proceeding to Mode 1 or Mode 2.
+
+## Anchor File
+
+After git validation passes, manage the `docs/anchor.txt` file to track which commit the documentation is based on.
+
+### Save Anchor (both modes)
+
+After validation passes, collect current git state and write to `docs/anchor.txt`:
+
+```bash
+BRANCH=$(git branch --show-current)
+COMMIT=$(git rev-parse HEAD)
+MESSAGE=$(git log -1 --format=%s)
+```
+
+Write to `docs/anchor.txt` with the following format:
+
+```
+branch: <branch-name>
+commit: <full-commit-hash>
+message: <commit-message>
+```
+
+**CRITICAL**: Always use **overwrite** mode when writing `docs/anchor.txt`. If the file already exists, replace its entire content. Never append.
+
+**For Mode 1 (new docs/)**: Create the `docs/` directory first (if it doesn't exist), then write `anchor.txt`.
+
+### Read Old Anchor (Mode 2 only)
+
+For Mode 2 (delta update), BEFORE overwriting `docs/anchor.txt`, read the existing `docs/anchor.txt` to obtain the old document baseline:
+
+- Parse the `branch:` line → old branch name
+- Parse the `commit:` line → old commit hash (full SHA)
+
+If either value is missing or cannot be parsed:
+- **Ask the user**: "无法从 docs/anchor.txt 解析旧的文档基准版本信息，请提供旧文档是基于哪个分支、哪个 commit 生成的？"
+- Do NOT proceed until the user provides this information.
+
+### Branch Comparison (Mode 2 only)
+
+Compare old branch (from old anchor.txt) with current branch (from `git branch --show-current`):
+
+- **Same branch** → Proceed with delta update. Use `git log <old-commit>..<new-commit> --oneline` to get the commit history, and `git diff <old-commit>..<new-commit> --name-status` to get file changes.
+- **Different branch** → **Reject and stop**: "旧文档基于分支 `<old-branch>`（commit `<old-commit-short>`）生成，当前分支为 `<current-branch>`，分支不一致，无法进行增量更新。请切换到 `<old-branch>` 分支后再更新文档，或使用 Mode 1 从当前分支重新生成全部文档。"
+
 ## Mode 1: Full Document Generation (no existing docs/)
 
 Run when `docs/` does not exist or is empty.
 
 ### Workflow
+
+0. **Validate git state and save anchor**
+   - Run the Pre-generation Git Validation checks (see above). If any check fails, reject and stop.
+   - Create the `docs/` directory if it doesn't exist.
+   - Save the current branch name, commit hash, and commit message to `docs/anchor.txt` (overwrite mode, see Anchor File section above).
 
 1. **Inventory the codebase**
    - Identify project type(s), runtimes, entry points, module boundaries, and infra files.
@@ -419,17 +506,27 @@ Run when `docs/` exists with detailed documentation.
 
 ### Workflow
 
-1. **Detect Changes (git diff, last 3 commits)**
+0. **Validate git state**
+   - Run the Pre-generation Git Validation checks (see above). If any check fails, reject and stop.
+   - This ensures the codebase is on a clean commit before delta update.
+
+1. **Read Old Anchor and Detect Changes**
+
+   Before overwriting `docs/anchor.txt`, read the existing file to obtain the old document baseline (see Anchor File section above for parsing details).
+
+   After the old anchor is read and git validation passes, save the new anchor (with current HEAD info, overwrite mode). Then compute the diff between the old and new commits:
 
    ```bash
-   git diff HEAD~3..HEAD --name-status
+   # Get all commit messages between old and new commit (summarize project change intent)
+   git log <old-commit>..<new-commit> --oneline
+
+   # Get all file changes between old and new commit
+   git diff <old-commit>..<new-commit> --name-status
    ```
 
    - Focus on source files only. Ignore non-source files (`.md`, `.gitignore`, lock files, config files that don't affect behavior).
-   - If there are also uncommitted changes, include them: `git diff HEAD --name-status`.
-   - Default depth is 3 commits. User can override by passing a different range.
-
-   If no meaningful source changes are found, report this and stop.
+   - Use the commit log to understand the intent and scope of changes since the last documentation update.
+   - If `<old-commit>` and `<new-commit>` are the same hash, no source changes have occurred — report this and stop.
 
 2. **Map Changes to Doc Files**
 
