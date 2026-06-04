@@ -83,6 +83,32 @@ digraph document_flow {
 
 This applies to ALL mermaid node shapes: `[]` (rectangle), `()` (rounded), `{}` (diamond), `[()]` (circle), `[//]` (parallelogram), etc. The quoting and escaping rules are the same for all shapes.
 
+7c. **Subgraph headers must NOT use node shapes; define nodes with shapes inside the subgraph.** When using `subgraph` to group components, the subgraph header should only specify the ID and optional label using `subgraph ID [Label Text]` format. NEVER put node shape syntax (e.g., `[()]`, `[( )]`, `{ }`) directly in the subgraph header line. Instead, define the shaped node as a separate node inside the subgraph body, and connect related nodes with edges (`-->`).
+
+```
+✅ CORRECT:
+    subgraph DB_Layer [Database Layer]
+        DB[(PostgreSQL)]
+        DB --> Table["journal_information表"]
+    end
+
+    subgraph Auth_Zone [Authentication]
+        AuthSvc[Auth Service]
+        AuthSvc --> TokenMgr["Token Manager"]
+    end
+
+❌ WRONG (shape in subgraph header — will render incorrectly):
+    subgraph DB[(PostgreSQL)]
+        Table["journal_information表"]
+    end
+
+    subgraph AuthSvc[Auth Service]
+        TokenMgr["Token Manager"]
+    end
+```
+
+This applies to ALL subgraph shapes: `subgraph ID[Label]` (rectangle), `subgraph ID(Label)` (rounded), `subgraph ID[(Label)]` (cylinder/database), `subgraph ID{Label}` (diamond), etc. Always use the clean `subgraph ID [Label]` header format and define shaped nodes inside.
+
 8. **Modification history on every doc.** Every document under `docs/` must begin with a modification history table (see Modification History format below).
 
 9. **Screenshot placeholders for frontend UI modules.** When documenting frontend/UI modules (pages, components, views with visual output), insert screenshot placeholders at key UI interaction points. Each placeholder MUST be followed by a markdown image link pointing to the `截图/` directory at the same directory level. If the project is a Web App, auto-capture screenshots using the `auto-capture-for-webapp:take-screenshots` skill after generating docs.
@@ -488,4 +514,4 @@ After completing either mode, compare doc freshness against the project:
 
 ## Output Quality Bar
 
-The documentation must provide enough architectural, interface, and behavioral detail for full-project reconstruction without reading the original code — whether generated fresh or updated incrementally. Logic must be expressed through mermaid diagrams and natural language descriptions, never raw source code. Architecture and layout diagrams must use mermaid — ASCII character drawings are strictly forbidden. All mermaid node names containing spaces or special characters must be wrapped in double quotes, and inner double-quote characters must be HTML-escaped as `&quot;`. Frontend UI documentation must include screenshot placeholders that identify the feature module, page/component name, UI state, and overall layout structure at a high level.
+The documentation must provide enough architectural, interface, and behavioral detail for full-project reconstruction without reading the original code — whether generated fresh or updated incrementally. Logic must be expressed through mermaid diagrams and natural language descriptions, never raw source code. Architecture and layout diagrams must use mermaid — ASCII character drawings are strictly forbidden. All mermaid node names containing spaces or special characters must be wrapped in double quotes, and inner double-quote characters must be HTML-escaped as `&quot;`. Subgraph headers must use clean `subgraph ID [Label]` format without node shapes; define shaped nodes and their connections inside the subgraph body. Frontend UI documentation must include screenshot placeholders that identify the feature module, page/component name, UI state, and overall layout structure at a high level.
