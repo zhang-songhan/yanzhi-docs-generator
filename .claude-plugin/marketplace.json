@@ -8,7 +8,7 @@
       "name": "yanzhi-docs-generator",
       "source": "./",
       "description": "A Claude Code plugin that generates or updates the detailed architecture documentation for your project.",
-      "version": "v260604-163720",
+      "version": "v260605-113932",
       "author": {
         "name": "ATreep"
       }

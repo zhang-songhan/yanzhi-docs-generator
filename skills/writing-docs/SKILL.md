@@ -82,6 +82,8 @@ digraph document_flow {
 
 7a. **Architecture and layout diagrams must use mermaid.** When representing system architecture, component layout, page structure, UI layout design, or any structural diagram, ALWAYS use mermaid diagrams (flowchart, graph, block diagram). NEVER use ASCII character drawings (`┌─┐└─┘│├┤`), plain-text boxes, or manual text-based layout diagrams. Mermaid ensures the diagrams are clean, maintainable, and consistently render across different viewers.
 
+7a-i. **Convert old ASCII flowcharts during delta updates.** When updating existing docs (Mode 2), scan ALL old doc files for ASCII character drawings (`┌─┐└─┘│├┤`), manual text-based layout diagrams, plain-text boxes, and any non-mermaid diagram markup. Convert every found ASCII diagram to its mermaid equivalent (flowchart, sequenceDiagram, erDiagram, etc.). This takes priority over rule 6 (preserve manual edits) — ASCII diagrams are a formatting anti-pattern, not meaningful manual content. Check for common ASCII drawing patterns: box-drawing characters (`┌─┐└─┘│├┤┬┴┼`), plus/minus/pipe box borders (`+--+`, `|`), arrow lines (`---->`, `==>`), and indented text inside hand-drawn boxes.
+
 7b. **Mermaid node names with spaces MUST use quotes; inner quotes MUST be escaped.** When a mermaid node identifier contains spaces or special characters (e.g., Chinese characters, colons, parentheses), wrap the description text in double quotes inside square brackets. When the node text itself contains double-quote characters (e.g., Chinese quotation marks `""` around a term), those inner quotes MUST be HTML-escaped as `&quot;` within the outer quotes. Failing to quote names or escape inner quotes causes mermaid rendering errors.
 
 ```
@@ -572,6 +574,7 @@ Run when `docs/` exists with detailed documentation.
    - Read the corresponding source code (current state).
    - Identify what has changed and which sections of the doc are now stale.
    - **Check for missing screenshot placeholders**: If the doc documents a frontend/UI module (has visual UI content), verify whether it already contains screenshot placeholders. If it does NOT, flag this doc as **缺失截图** — the old docs never had screenshots, and placeholders must be added for ALL pages/views described in this doc file.
+   - **Check for ASCII flowcharts**: Scan the doc for ASCII character drawings (`┌─┐└─┘│├┤`, `+--+`, `|`, arrow lines, indented text inside hand-drawn boxes). If ANY are found, flag this doc as **ASCII图表需转换** — the old docs contain ASCII diagrams that must be converted to mermaid equivalents. This check applies to ALL old docs, not just docs mapped to changed source files (per rule 7a-i).
 
 6. **Update Docs (delta only)**
 
@@ -583,6 +586,7 @@ Run when `docs/` exists with detailed documentation.
    - **Coverage matrix** — update `docs/05_实现指南/02_模块目录.md` if modules were added or removed.
    - **PRD** — update design objectives/flaws in `docs/01_产品需求文档/01_产品需求文档.md` if module behavior changed.
    - **Index** — update `docs/README.md` if new doc files/folders were added or removed.
+   - **ASCII-to-mermaid conversion** — for every doc flagged as **ASCII图表需转换** (from Step 5), convert ALL ASCII character drawings to mermaid equivalents. Match the diagram type to the content: architecture layouts → `flowchart` with subgraphs, data flow → `flowchart TD/LR`, component interactions → `sequenceDiagram`, entity relationships → `erDiagram`, state transitions → `stateDiagram-v2`. Follow rules 7b (quote escaping) and 7c (subgraph headers) for all converted diagrams. Remove the original ASCII art blocks after successful conversion.
    - **Modification history** — append a new row to the history table in every affected document. Use git username from `git config user.name`.
 
 7. **Audit Existing Screenshots (GUI projects only)**
@@ -667,6 +671,19 @@ Run when `docs/` exists with detailed documentation.
     ```
 
     For non-GUI projects, state that no screenshot changes apply.
+    - **ASCII-to-mermaid conversion report**: List ALL old doc files where ASCII diagrams were found and converted to mermaid, with the type of mermaid diagram used:
+
+    ```markdown
+    ### ASCII-to-Mermaid Conversion Report
+
+    | 文档文件 | 原ASCII图描述 | 转换后Mermaid类型 | 状态 |
+    |----------|---------------|-------------------|------|
+    | 03_数据模型.md | ER实体关系图 (ASCII boxes) | erDiagram | ✅ 已转换 |
+    | 02_登录流程.md | 登录流程图 (ASCII arrows) | flowchart TD | ✅ 已转换 |
+    | 01_模块概述.md | 架构分层图 (ASCII layout) | flowchart LR | ✅ 已转换 |
+    ```
+
+    If no ASCII diagrams were found, state that no conversions were needed.
 
 ## Staleness Check (both modes)
 
@@ -683,4 +700,4 @@ After completing either mode, compare doc freshness against the project:
 
 ## Output Quality Bar
 
-The documentation must provide enough architectural, interface, and behavioral detail for full-project reconstruction without reading the original code — whether generated fresh or updated incrementally. Logic must be expressed through mermaid diagrams and natural language descriptions, never raw source code. Architecture and layout diagrams must use mermaid — ASCII character drawings are strictly forbidden. All mermaid node names containing spaces or special characters must be wrapped in double quotes, and inner double-quote characters must be HTML-escaped as `&quot;`. Subgraph headers must use clean `subgraph ID [Label]` format without node shapes; define shaped nodes and their connections inside the subgraph body. Frontend UI documentation must include screenshot placeholders that identify the feature module, page/component name, UI state, and overall layout structure at a high level.
+The documentation must provide enough architectural, interface, and behavioral detail for full-project reconstruction without reading the original code — whether generated fresh or updated incrementally. Logic must be expressed through mermaid diagrams and natural language descriptions, never raw source code. Architecture and layout diagrams must use mermaid — ASCII character drawings (`┌─┐└─┘│├┤`, `+--+`, pipe/plus borders) are strictly forbidden. During delta updates, ALL ASCII diagrams found in old docs must be converted to mermaid equivalents. All mermaid node names containing spaces or special characters must be wrapped in double quotes, and inner double-quote characters must be HTML-escaped as `&quot;`. Subgraph headers must use clean `subgraph ID [Label]` format without node shapes; define shaped nodes and their connections inside the subgraph body. Frontend UI documentation must include screenshot placeholders that identify the feature module, page/component name, UI state, and overall layout structure at a high level.
