@@ -7,6 +7,13 @@ description: Use when generating or updating project architectural documents in 
 
 Generate or incrementally update project documents from the codebase into `docs/`.
 
+## Mode Selection Rule (CRITICAL)
+
+**Mode is determined by whether `docs/` exists with documentation, NOT by whether `anchor.txt` exists.**
+
+- `docs/` does NOT exist or is empty → **Mode 1** (full generation)
+- `docs/` exists with documentation files → **Mode 2** (delta update), **ALWAYS**. This is non-negotiable regardless of `anchor.txt` presence.
+
 ## Decision Flow
 
 ```dot
@@ -16,13 +23,13 @@ digraph document_flow {
     "docs/ exists with docs?" [shape=diamond];
     "Read old anchor.txt from docs/" [shape=box];
     "Save current branch/commit/msg to docs/anchor.txt (overwrite)" [shape=box];
-    "Full document generation" [shape=box];
+    "Full document generation (Mode 1)" [shape=box];
     "Parse old branch + commit?" [shape=diamond];
     "Ask user for old branch/commit" [shape=box];
     "Same branch?" [shape=diamond];
     "Reject: branch mismatch error" [shape=box];
     "git log + git diff old..new to summarize changes" [shape=box];
-    "Delta update docs/" [shape=box];
+    "Delta update docs/ (Mode 2)" [shape=box];
     "Report: no changes" [shape=box];
     "Has frontend/UI code?" [shape=diamond];
     "Insert screenshot placeholders in UI docs" [shape=box];
@@ -34,20 +41,20 @@ digraph document_flow {
 
     "Git init + commits + clean working tree?" -> "Reject: show error and stop" [label="no"];
     "Git init + commits + clean working tree?" -> "docs/ exists with docs?" [label="yes"];
-    "docs/ exists with docs?" -> "Read old anchor.txt from docs/" [label="yes"];
-    "docs/ exists with docs?" -> "Save current branch/commit/msg to docs/anchor.txt (overwrite)" [label="no or empty"];
+    "docs/ exists with docs?" -> "Save current branch/commit/msg to docs/anchor.txt (overwrite)" [label="no or empty\n→ Mode 1"];
+    "docs/ exists with docs?" -> "Read old anchor.txt from docs/" [label="yes\n→ Mode 2"];
     "Read old anchor.txt from docs/" -> "Save current branch/commit/msg to docs/anchor.txt (overwrite)";
-    "Save current branch/commit/msg to docs/anchor.txt (overwrite)" -> "Full document generation" [label="Mode 1"];
-    "Save current branch/commit/msg to docs/anchor.txt (overwrite)" -> "Parse old branch + commit?" [label="Mode 2"];
-    "Full document generation" -> "Has frontend/UI code?";
-    "Parse old branch + commit?" -> "Ask user for old branch/commit" [label="no"];
+    "Save current branch/commit/msg to docs/anchor.txt (overwrite)" -> "Full document generation (Mode 1)" [label="from 'no or empty'"];
+    "Save current branch/commit/msg to docs/anchor.txt (overwrite)" -> "Parse old branch + commit?" [label="from 'yes'"];
+    "Full document generation (Mode 1)" -> "Has frontend/UI code?";
+    "Parse old branch + commit?" -> "Ask user for old branch/commit" [label="no or missing"];
     "Parse old branch + commit?" -> "Same branch?" [label="yes"];
     "Ask user for old branch/commit" -> "Same branch?";
     "Same branch?" -> "Reject: branch mismatch error" [label="no"];
     "Same branch?" -> "git log + git diff old..new to summarize changes" [label="yes"];
-    "git log + git diff old..new to summarize changes" -> "Delta update docs/" [label="has changes"];
+    "git log + git diff old..new to summarize changes" -> "Delta update docs/ (Mode 2)" [label="has changes"];
     "git log + git diff old..new to summarize changes" -> "Report: no changes" [label="same commit"];
-    "Delta update docs/" -> "Has frontend/UI code?";
+    "Delta update docs/ (Mode 2)" -> "Has frontend/UI code?";
     "Has frontend/UI code?" -> "Insert screenshot placeholders in UI docs" [label="yes"];
     "Has frontend/UI code?" -> "Check staleness" [label="no"];
     "Insert screenshot placeholders in UI docs" -> "Web App project?";
@@ -59,7 +66,7 @@ digraph document_flow {
     "Reject: branch mismatch error" -> "Done";
     "Check staleness" -> "Ask user: refactor entire docs?" [label="most docs stale"];
     "Check staleness" -> "Done" [label="fresh enough"];
-    "Ask user: refactor entire docs?" -> "Full document generation" [label="yes"];
+    "Ask user: refactor entire docs?" -> "Full document generation (Mode 1)" [label="yes"];
     "Ask user: refactor entire docs?" -> "Done" [label="no"];
 }
 ```
@@ -74,7 +81,7 @@ digraph document_flow {
 
 4. **Numbered folder and file convention.** Every directory and file under `docs/` (except the root `README.md`) must follow the `{序号}_{中文名称}` format. Use zero-padded two-digit numbers (`01`, `02`, …). This applies to all levels: top-level category folders, sub-folders, and individual `.md` files.
 
-5. **Delta-only when possible.** If `docs/` already contains detailed documentation, do NOT regenerate from scratch. Use git diff to detect changes and update only affected documents.
+5. **Delta-only when possible.** If `docs/` already contains documentation (regardless of whether `anchor.txt` exists), you MUST use Mode 2 (delta update). Do NOT regenerate from scratch. Use git diff to detect changes and update only affected documents. The presence of existing docs is the ONLY factor for mode selection — `anchor.txt` absence does NOT justify switching to Mode 1.
 
 6. **Preserve manual edits.** When updating an existing doc file, preserve manually written sections. Only update content that corresponds to changed source code.
 
@@ -360,9 +367,22 @@ For Mode 2 (delta update), BEFORE overwriting `docs/anchor.txt`, read the existi
 - Parse the `branch:` line → old branch name
 - Parse the `commit:` line → old commit hash (full SHA)
 
-If either value is missing or cannot be parsed:
-- **Ask the user**: "无法从 docs/anchor.txt 解析旧的文档基准版本信息，请提供旧文档是基于哪个分支、哪个 commit 生成的？"
-- Do NOT proceed until the user provides this information.
+If `anchor.txt` does NOT exist, or either value is missing / cannot be parsed:
+
+1. **Do NOT fall back to Mode 1.** Existing docs always mean Mode 2.
+2. **Ask the user** for the old baseline information:
+
+   > 无法从 docs/anchor.txt 解析旧的文档基准版本信息，请提供旧文档是基于哪个分支、哪个 commit 生成的？
+
+   The user must provide BOTH:
+   - Old branch name (e.g., `main`, `develop`)
+   - Old commit hash (full SHA recommended, short hash acceptable)
+
+3. **Do NOT proceed** with delta update until the user provides valid branch and commit information.
+4. **After user provides the info**, proceed with branch comparison and delta update as normal.
+5. **The new `anchor.txt` is always created** — after reading the old anchor (or after the user provides the missing info), save the current HEAD info to `docs/anchor.txt` (overwrite mode, see Save Anchor above). This ensures `anchor.txt` exists for ALL future delta updates.
+
+**CRITICAL**: The absence of `anchor.txt` is expected when docs were created by a previous version of this skill or migrated from elsewhere. It means the old baseline must be obtained from the user — it does NOT mean the docs are invalid or should be regenerated.
 
 ### Branch Comparison (Mode 2 only)
 
@@ -371,9 +391,9 @@ Compare old branch (from old anchor.txt) with current branch (from `git branch -
 - **Same branch** → Proceed with delta update. Use `git log <old-commit>..<new-commit> --oneline` to get the commit history, and `git diff <old-commit>..<new-commit> --name-status` to get file changes.
 - **Different branch** → **Reject and stop**: "旧文档基于分支 `<old-branch>`（commit `<old-commit-short>`）生成，当前分支为 `<current-branch>`，分支不一致，无法进行增量更新。请切换到 `<old-branch>` 分支后再更新文档，或使用 Mode 1 从当前分支重新生成全部文档。"
 
-## Mode 1: Full Document Generation (no existing docs/)
+## Mode 1: Full Document Generation (docs/ does NOT exist or is empty)
 
-Run when `docs/` does not exist or is empty.
+Run ONLY when `docs/` does not exist or is empty. If `docs/` exists with any documentation files (even without `anchor.txt`), you MUST use Mode 2.
 
 ### Workflow
 
@@ -514,9 +534,15 @@ Run when `docs/` exists with detailed documentation.
 
 1. **Read Old Anchor and Detect Changes**
 
-   Before overwriting `docs/anchor.txt`, read the existing file to obtain the old document baseline (see Anchor File section above for parsing details).
+   **First, obtain the old baseline** (see Anchor File section above for full details):
 
-   After the old anchor is read and git validation passes, save the new anchor (with current HEAD info, overwrite mode). Then compute the diff between the old and new commits:
+   - Read `docs/anchor.txt` if it exists. Parse the `branch:` and `commit:` lines.
+   - If `anchor.txt` does NOT exist or cannot be parsed: **ask the user** for the old branch and commit hash. Do NOT fall back to Mode 1. Wait for the user to provide valid information before continuing.
+   - If the user cannot provide this information, explain that delta update requires a baseline commit to compute diffs, and offer to use Mode 1 as a last resort only if the user explicitly confirms.
+
+   **After obtaining the old baseline**, save the new anchor (with current HEAD info, overwrite mode). This creates `docs/anchor.txt` if it didn't exist before, ensuring all future updates have an `anchor.txt` baseline.
+
+   Then compute the diff between the old and new commits:
 
    ```bash
    # Get all commit messages between old and new commit (summarize project change intent)
